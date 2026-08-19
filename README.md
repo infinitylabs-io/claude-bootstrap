@@ -9,7 +9,7 @@ idempotente e reproduzível.
 
 ```bash
 # 1. clonar na máquina alvo
-git clone https://github.com/infinity-ai-dev/claude-bootstrap.git
+git clone https://github.com/infinitylabs-io/claude-bootstrap.git
 cd claude-bootstrap
 
 # 2. preencher os segredos (opcional — sem eles, context7/tavily são pulados)
