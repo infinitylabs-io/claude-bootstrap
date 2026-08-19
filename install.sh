@@ -11,8 +11,11 @@
 #   - skills globais (~/.claude/skills): context7-mcp, docker-expert,
 #     frontend-design, java-architect, senior-qa, springboot-security
 #   - regra global (~/.claude/rules/context7.md)
-#   - settings (~/.claude/settings.json): modelo, tema, plugin codex
+#   - settings (~/.claude/settings.json): modelo, tema, plugins habilitados
 #   - plugin codex@openai-codex (marketplace openai/codex-plugin-cc)
+#   - plugin langchain-skills@langchain-skills (marketplace
+#     langchain-ai/langchain-skills) — 22 skills oficiais de LangChain,
+#     LangGraph e Deep Agents, usadas no runtime Python de agentes
 #
 # Uso:
 #   ./install.sh [--project-dir <dir>] [--model <modelo>] [--force-mcp] [--update] [--no-start]
@@ -147,9 +150,15 @@ desired = {
     "model": os.environ["CLAUDE_MODEL"],
     "theme": "dark",
     "tui": "fullscreen",
-    "enabledPlugins": {"codex@openai-codex": True},
+    "enabledPlugins": {
+        "codex@openai-codex": True,
+        "langchain-skills@langchain-skills": True,
+    },
     "extraKnownMarketplaces": {
-        "openai-codex": {"source": {"source": "github", "repo": "openai/codex-plugin-cc"}}
+        "openai-codex": {"source": {"source": "github", "repo": "openai/codex-plugin-cc"}},
+        "langchain-skills": {
+            "source": {"source": "github", "repo": "langchain-ai/langchain-skills"}
+        },
     },
 }
 # merge raso: o desejado vence, mas dicts de 1º nível são combinados
@@ -207,14 +216,23 @@ else
   warn "Pencil não instalado nesta máquina — MCP pencil pulado (instale o app Pencil se precisar de .pen)"
 fi
 
-# --- plugin codex ------------------------------------------------------------------
-log "instalando plugin codex@openai-codex"
-claude plugin marketplace add openai/codex-plugin-cc >/dev/null 2>&1 || true
-if claude plugin install codex@openai-codex >/dev/null 2>&1; then
-  log "  plugin codex instalado"
-else
-  warn "instalação do plugin codex falhou — rode manualmente: claude plugin install codex@openai-codex"
-fi
+# --- plugins ------------------------------------------------------------------------
+# install_plugin <plugin@marketplace> <repo-github-do-marketplace> <rótulo>
+install_plugin() {
+  local plugin="$1" repo="$2" label="$3"
+  log "instalando plugin $plugin"
+  claude plugin marketplace add "$repo" --scope user >/dev/null 2>&1 || true
+  # -y é exigido quando stdout não é TTY (provisionamento headless)
+  if claude plugin install "$plugin" --scope user -y >/dev/null 2>&1; then
+    log "  $label instalado"
+  else
+    warn "instalação de $label falhou — rode manualmente: claude plugin install $plugin"
+  fi
+}
+
+install_plugin codex@openai-codex openai/codex-plugin-cc "plugin codex"
+install_plugin langchain-skills@langchain-skills langchain-ai/langchain-skills \
+  "skills oficiais LangChain (22)"
 
 # --- resumo -------------------------------------------------------------------------
 echo
@@ -224,6 +242,7 @@ echo
 log "Lembretes:"
 echo "  - morphllm apontado para: $PROJECT_DIR (reconfigure com --project-dir --force-mcp em outro projeto)."
 echo "  - O plugin codex requer o Codex CLI autenticado ('codex login') para funcionar."
+echo "  - As 22 skills LangChain custam ~2.1k tokens sempre-carregados; atualize com 'claude plugin marketplace update langchain-skills'."
 echo "  - Shells novas já acham 'claude' no PATH ($RC_FILE); na shell atual use: export PATH=\"\$HOME/.local/bin:\$PATH\""
 echo
 

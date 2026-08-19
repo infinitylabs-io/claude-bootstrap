@@ -2,7 +2,8 @@
 
 Sobe uma máquina nova (VPS, container, servidor) com o ambiente Claude Code
 completo em um comando: binário via **instalador nativo da Anthropic**, MCPs,
-skills globais, regras e plugin codex — tudo idempotente e reproduzível.
+skills globais, regras e plugins (codex + skills oficiais LangChain) — tudo
+idempotente e reproduzível.
 
 ## Uso
 
@@ -50,8 +51,15 @@ headless use `--no-start`. `codex login` à parte, se for usar o plugin codex.
 - **Regra global** — `~/.claude/rules/context7.md` (sempre buscar docs de
   lib/framework via context7 em vez de responder de memória).
 - **Settings** (`~/.claude/settings.json`) — modelo, tema dark, tui fullscreen,
-  plugin codex habilitado. Merge não-destrutivo: preserva o que já existir.
-- **Plugin** — codex@openai-codex (marketplace `openai/codex-plugin-cc`).
+  plugins habilitados. Merge não-destrutivo: preserva o que já existir.
+- **Plugins** — dois, ambos escopo user:
+  - `codex@openai-codex` (marketplace `openai/codex-plugin-cc`).
+  - `langchain-skills@langchain-skills` (marketplace
+    `langchain-ai/langchain-skills`, MIT) — as **22 skills oficiais** da
+    LangChain para LangChain/LangGraph/Deep Agents, alvo `>=1.0,<2.0` (API
+    `create_agent`, sem `AgentExecutor`/`LLMChain` legado). Custam ~2,1k tokens
+    sempre-carregados; o corpo de cada skill só entra quando dispara.
+    Atualizar: `claude plugin marketplace update langchain-skills`.
 
 ## Pré-requisitos que o script resolve sozinho (se rodar como root em Debian/Ubuntu)
 
@@ -67,6 +75,12 @@ Quando a máquina de referência ganhar/perder skills ou regras globais:
 ./refresh-payload.sh   # recopia ~/.claude/skills e ~/.claude/rules para payload/
 git commit -am "payload: atualiza skills/regras" && git push
 ```
+
+Skills que vêm de **plugin** (as 22 da LangChain) não passam pelo `payload/` —
+elas moram em `~/.claude/plugins/` e são reinstaladas do marketplace pelo
+`install.sh`. Para adicionar outro plugin, use a função `install_plugin` no
+`install.sh` e acrescente a entrada em `enabledPlugins`/`extraKnownMarketplaces`
+no bloco de settings.
 
 ## O que NÃO é coberto (de propósito)
 
